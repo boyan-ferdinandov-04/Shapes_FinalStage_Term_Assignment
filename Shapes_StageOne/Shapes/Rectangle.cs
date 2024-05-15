@@ -50,7 +50,7 @@ namespace Shapes_StageOne.Shapes
 
         public string Details()
         {
-            return $"Coordinates: X: ({Coordinates.X} Y: {Coordinates.Y}), Height: {Height}, Width: {Width}, Area: {CalculateArea()}";
+            return $"Coordinates: ({Coordinates.X}, {Coordinates.Y}), Height: {Height}, Width: {Width}, Area: {CalculateArea()}";
         }
 
         public override void Draw(Graphics g)

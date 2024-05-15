@@ -1,10 +1,11 @@
 ﻿using Shapes_StageOne.Shapes.Interfaces;
 using System.Drawing;
 
+
 namespace Shapes_StageOne.Shapes
 {
     [Serializable]
-    public class Rectangle:Shape
+    public class Rectangle:Shape,IShapeInfo
     {
         private int _height;
         private int _width;
@@ -21,12 +22,8 @@ namespace Shapes_StageOne.Shapes
             }
             set
             {
-                _height = Math.Abs(value);
-                if (value < 0)
-                {
-                    throw new ArgumentException("No negative values");
-                }
-               
+                _height = value;
+
             }
         }
 
@@ -39,12 +36,8 @@ namespace Shapes_StageOne.Shapes
 
             set
             {
-                _width = Math.Abs(value);
-                if (value < 0)
-                {
-                    throw new ArgumentException("No negative values");
-                }
-                
+                _width = value;
+              
             }
         }
 
@@ -55,6 +48,10 @@ namespace Shapes_StageOne.Shapes
             
         }
 
+        public string Details()
+        {
+            return $"Coordinates: X: ({Coordinates.X} Y: {Coordinates.Y}), Height: {Height}, Width: {Width}, Area: {CalculateArea()}";
+        }
 
         public override void Draw(Graphics g)
         {

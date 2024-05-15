@@ -1,7 +1,9 @@
 using Shapes_StageOne.Shapes;
 using Shapes_StageOne.Shapes.Enum;
+using Shapes_StageOne.Shapes.Interfaces;
 using System.Drawing.Imaging;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 using System.Xml.Serialization;
 using Rectangle = Shapes_StageOne.Shapes.Rectangle;
 
@@ -10,28 +12,127 @@ namespace Shapes_Paint
     public partial class Form1 : Form
     {
         private Bitmap bitmap;
-        Bitmap addedImage;
-        ButtonTypes type;
+        private Bitmap addedImage;
+        private ButtonTypes type;
         private bool painted = false;
-        Point pointerY;
-        Pen p = new Pen(Color.Black, 5);
-        Triangle triangle;
-        Square square;
+        private Point pointerY;
+        private Pen p = new Pen(Color.Black, 5);
+        private Triangle triangle;
+        private Square square;
         private Rectangle rectangle;
         private Color newColor;
         private List<Shape> shapes = new();
-        Circle circle;
+        private Circle circle;
         private Stack<List<Shape>> undoHistory = new Stack<List<Shape>>();
 
         public Form1()
         {
             InitializeComponent();
-            Width = 1920;
             Height = 1080;
+            Width = 1920;
             bitmap = new Bitmap(background.Width, background.Height);
             Graphics graphics = Graphics.FromImage(bitmap);
             graphics.Clear(Color.White);
             background.Image = bitmap;
+        }
+
+        private void background_MouseDown(object sender, MouseEventArgs e)
+        {
+            painted = true;
+            pointerY = e.Location;
+
+            if (e.Button != MouseButtons.Left)
+            {
+                return;
+            }
+
+            switch (type)
+            {
+                case ButtonTypes.Triangle:
+                    triangle = new Triangle();
+                    triangle.Side = 0;
+                    break;
+                case ButtonTypes.Square:
+                    square = new Square();
+                    square.Coordinates = e.Location;
+                    square.Height = 0;
+                    break;
+
+                case ButtonTypes.Rectangle:
+                    rectangle = new Rectangle();
+                    rectangle.Coordinates = e.Location;
+                    rectangle.Width = 0;
+                    rectangle.Height = 0;
+                    break;
+
+                case ButtonTypes.Ellipse:
+                    circle = new Circle();
+                    circle.Coordinates = e.Location;
+                    circle.Width = 0;
+                    circle.Height = 0;
+                    break;
+            }
+        }
+
+
+        private void background_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button != MouseButtons.Left || !painted)
+            {
+            }
+            else
+            {
+                if (type != ButtonTypes.Triangle)
+                {
+
+                    switch (type)
+                    {
+                        case ButtonTypes.Square:
+                            square.Height = e.Location.X - square.Coordinates.X;
+                            background.Refresh();
+                            break;
+
+                        case ButtonTypes.Rectangle:
+                            rectangle.Width = e.Location.X - rectangle.Coordinates.X;
+                            rectangle.Height = e.Location.Y - rectangle.Coordinates.Y;
+                            background.Refresh();
+                            break;
+
+                        case ButtonTypes.Ellipse:
+                            if (circle != null)
+                            {
+                                circle.Width = Math.Abs(e.Location.X - circle.Coordinates.X);
+                                circle.Height = Math.Abs(e.Location.Y - circle.Coordinates.Y);
+                                background.Refresh();
+                            }
+                            break;
+                    }
+                }
+                else
+                {
+                    if (triangle != null)
+                    {
+                        float center = (pointerY.X + e.Location.X) / 2;
+                        triangle.Coordinates = new Point
+                        {
+                            X = Math.Min(pointerY.X, e.Location.X),
+                            Y = Math.Min(pointerY.Y, e.Location.Y)
+                        };
+
+                        Point pointA = new Point(pointerY.X, pointerY.Y);
+                        Point pointB = new Point((int)center, e.Location.Y);
+                        Point pointC = new Point(e.Location.X, pointerY.Y);
+
+                        triangle.PointA = pointA;
+                        triangle.PointB = pointB;
+                        triangle.PointC = pointC;
+                        triangle.Side = Math.Abs(pointerY.X - e.Location.X);
+                    }
+                    background.Refresh();
+                }
+
+            }
+            background.Refresh();
         }
 
         private void background_MouseUp(object sender, MouseEventArgs e)
@@ -73,7 +174,6 @@ namespace Shapes_Paint
                     if (circle != null)
                     {
                         circle.BorderColor = p.Color;
-                        circle.FilledColor = Color.Transparent;
                         shape = circle;
                     }
                     break;
@@ -84,104 +184,14 @@ namespace Shapes_Paint
                 RedrawShapes();
             }
         }
-        private void background_MouseDown(object sender, MouseEventArgs e)
+
+        private void background_OnPaint(object sender, PaintEventArgs e)
         {
-            painted = true;
-            pointerY = e.Location;
-
-            if (e.Button != MouseButtons.Left)
+            foreach (var shape in shapes)
             {
-                return;
-            }
-            
-            switch (type)
-            {
-                case ButtonTypes.Triangle:
-                    triangle = new Triangle();
-                    break;
-                case ButtonTypes.Square:
-                    square = new Square();
-                    square.Coordinates = e.Location;
-                    square.Height = 0;
-                    break;
-
-                case ButtonTypes.Rectangle:
-                    rectangle = new Rectangle();
-                    rectangle.Coordinates = e.Location;
-                    rectangle.Width = 0;
-                    rectangle.Height = 0;
-                    break;
-
-                case ButtonTypes.Ellipse:
-                    circle = new Circle();
-                    circle.Coordinates = e.Location;
-                    circle.Width = 0;
-                    circle.Height = 0;
-                    break;
+                shape.Draw(e.Graphics);
             }
         }
-
-
-        private void background_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.Button != MouseButtons.Left || !painted)
-            {
-            }
-            else
-            {
-                if (type != ButtonTypes.Triangle)
-                {
-                   
-                    switch(type)
-                    {
-                        case ButtonTypes.Square:
-                            square.Height = e.Location.X - square.Coordinates.X;
-                            background.Refresh();
-                        break;
-
-                        case ButtonTypes.Rectangle:
-                            rectangle.Width = e.Location.X - rectangle.Coordinates.X;
-                            rectangle.Height = e.Location.Y - rectangle.Coordinates.Y;
-                            background.Refresh(); 
-                        break;
-
-                        case ButtonTypes.Ellipse:
-                           if(circle != null)
-                           {
-                                circle.Width = Math.Abs(e.Location.X - circle.Coordinates.X);
-                                circle.Height = Math.Abs(e.Location.Y - circle.Coordinates.Y);
-                                background.Refresh();
-                           }
-                        break;
-                    }
-                }
-                else
-                {
-                    if (triangle != null)
-                    {
-                        float center = (pointerY.X + e.Location.X) / 2;
-                        triangle.Coordinates = new Point
-                        {
-                            X = Math.Min(pointerY.X, e.Location.X),
-                            Y = Math.Min(pointerY.Y, e.Location.Y)
-                        };
-
-                        Point pointA = new Point(pointerY.X, pointerY.Y);
-                        Point pointB = new Point((int)center, e.Location.Y);
-                        Point pointC = new Point(e.Location.X, pointerY.Y);
-
-                        triangle.PointA = pointA;
-                        triangle.PointB = pointB;
-                        triangle.PointC = pointC;
-                        triangle.Side = Math.Abs(pointerY.X - e.Location.X);
-                    }
-                    background.Refresh();
-                }
-
-            }
-            background.Refresh();
-        }
-
 
         private void clear_button_Click(object sender, EventArgs e)
         {
@@ -200,7 +210,7 @@ namespace Shapes_Paint
         {
             type = ButtonTypes.Triangle;
         }
- 
+
         private void square_button_Click(object sender, EventArgs e)
         {
             type = ButtonTypes.Square;
@@ -215,7 +225,7 @@ namespace Shapes_Paint
         {
             type = ButtonTypes.Ellipse;
         }
- 
+
         private void save_button_Click(object sender, EventArgs e)
         {
             SaveFileDialog saveFileDialog = new SaveFileDialog();
@@ -292,7 +302,7 @@ namespace Shapes_Paint
             bitmap = new Bitmap(background.Width, background.Height);
             using (Graphics g = Graphics.FromImage(bitmap))
             {
-                g.Clear(Color.White);
+                g.Clear(background.BackColor);
                 foreach (var shape in shapes)
                 {
                     shape.Draw(g);
@@ -309,12 +319,10 @@ namespace Shapes_Paint
 
             if (backgroundColor.ShowDialog() == DialogResult.OK)
             {
-                using (Graphics g = Graphics.FromImage((Bitmap)background.Image))
-                {
-                    background.BackColor = backgroundColor.Color;
-                    background_color.BackColor = backgroundColor.Color;
-                    g.Clear(backgroundColor.Color);
-                }
+                using Graphics g = Graphics.FromImage((Bitmap)background.Image);
+                background.BackColor = backgroundColor.Color;
+                background_color.BackColor = backgroundColor.Color;
+                g.Clear(backgroundColor.Color);
             }
 
         }
@@ -334,81 +342,9 @@ namespace Shapes_Paint
             p.Color = currentColor.BackColor;
         }
 
-        private void background_OnPaint(object sender, PaintEventArgs e)
-        {
-            foreach (var shape in shapes)
-            {
-               shape.Draw(e.Graphics);
-            }
-        }
-
         private void fill_button_Click(object sender, EventArgs e)
         {
             BorderColorChange(newColor);
-        }
-
-        private void square_area_Click(object sender, EventArgs e)
-        {
-            Form2 form2 = new Form2();
-            List<Square> selectedSquares = new List<Square>();
-
-            foreach (var shape in shapes)
-            {
-                if (shape is Square)
-                {
-                    selectedSquares.Add((Square)shape);
-                }
-            }
-
-            form2.Squares = selectedSquares;
-            form2.ShowDialog();
-        }
-
-        private void rectangle_info_Click(object sender, EventArgs e)
-        {
-            List<Rectangle> rects = new();
-
-            foreach (var shape in shapes)
-            {
-                if (shape is Rectangle)
-                {
-                    rects.Add((Rectangle)shape);
-                }
-            }
-            RectangleForm rectangleForm = new RectangleForm();
-            rectangleForm.Rectangles = rects;
-            rectangleForm.ShowDialog();
-        }
-
-        private void triangle_area_Click(object sender, EventArgs e)
-        {
-            List<Triangle> triangles = new();
-            foreach (var shape in shapes)
-            {
-                if (shape is Triangle)
-                {
-                    triangles.Add((Triangle)shape);
-                }
-            }
-            TriangleForm triangleForm = new();
-            triangleForm.Triangles = triangles;
-            triangleForm.ShowDialog();
-        }
-
-        private void circle_area_Click(object sender, EventArgs e)
-        {
-            List<Circle> circles = new();
-            foreach (var shape in shapes)
-            {
-                if (shape is Circle)
-                {
-                    circles.Add((Circle)shape);
-                }
-
-            }
-            CircleForm circleForm = new();
-            circleForm.Circles = circles;
-            circleForm.ShowDialog();
         }
 
         private void save_serialize_Click(object sender, EventArgs e)
@@ -516,12 +452,13 @@ namespace Shapes_Paint
         {
             using (OpenFileDialog ofd = new OpenFileDialog())
             {
+
                 ofd.Filter = "XML files (*.xml)|*.xml";
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
                     XmlSerializer serializer = new XmlSerializer(typeof(List<Shape>));
                     using FileStream fileStream = new FileStream(ofd.FileName, FileMode.Open);
-                    IEnumerable<Shape> loadedShapes = serializer.Deserialize(fileStream) as List<Shape>;
+                    IEnumerable<Shape>? loadedShapes = serializer.Deserialize(fileStream) as List<Shape>;
                     shapes.Clear();
                     shapes.AddRange(loadedShapes ?? Array.Empty<Shape>());
                     RedrawShapes();
@@ -547,13 +484,34 @@ namespace Shapes_Paint
             {
                 RedrawShapes();
                 background.Refresh();
-                background.BackColor = background.BackColor;
+                
             }
         }
+
 
         private void fill_color_button_Click(object sender, EventArgs e)
         {
             FillShape(newColor);
         }
+
+        private void displayDetailsButton_Click(object sender, EventArgs e)
+        {
+            StringBuilder detailsBuilder = new StringBuilder();
+
+            foreach (var shape in shapes)
+            {
+                if (shape is IShapeInfo detailsProvider && shape.IsSelected)
+                {
+                    detailsBuilder.AppendLine(detailsProvider.Details());
+                    detailsBuilder.AppendLine();
+                }
+            }
+
+            InfoForm detailsForm = new InfoForm();
+            detailsForm.DisplayDetails(detailsBuilder.ToString());
+            detailsForm.ShowDialog();
+        }
+
+
     }
 }

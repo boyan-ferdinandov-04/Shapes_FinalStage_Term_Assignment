@@ -4,7 +4,7 @@ using System.Drawing;
 namespace Shapes_StageOne.Shapes
 {
     [Serializable]
-    public class Square : Shape
+    public class Square : Shape, IShapeInfo
     {
         private int _height;
 
@@ -37,6 +37,11 @@ namespace Shapes_StageOne.Shapes
           
         }
 
+        public string Details()
+        {
+            return $"Coordinates: ({Coordinates.X}, {Coordinates.Y}); Height: {Height}, Area: {CalculateArea()}";
+        }
+
         public override void Draw(Graphics g)
         {
             using var brush = new SolidBrush(FilledColor);
@@ -47,7 +52,6 @@ namespace Shapes_StageOne.Shapes
 
         public override bool PointInFigure(Point point)
         {
-
            if((Coordinates.X < point.X && point.X < Coordinates.X + Height) && Coordinates.Y < point.Y && point.Y < Coordinates.Y + Height)
            {
                 return true;

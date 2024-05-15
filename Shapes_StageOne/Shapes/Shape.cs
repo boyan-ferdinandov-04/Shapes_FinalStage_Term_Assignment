@@ -12,7 +12,6 @@ namespace Shapes_StageOne.Shapes
     public abstract class Shape
     {
         private Color _color;
-        protected Color Color { get; set; }
         public Color FilledColor { get; set; } = Color.Transparent;
         public Color BorderColor { get; set; }
         public Point Coordinates { get; set; }
@@ -21,7 +20,7 @@ namespace Shapes_StageOne.Shapes
         //Protected Constructor
         protected Shape(Color color)
         {
-            color = _color;
+            _color = color;
         }
 
         public abstract float CalculateArea();

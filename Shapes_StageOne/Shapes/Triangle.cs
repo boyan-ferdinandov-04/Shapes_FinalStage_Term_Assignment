@@ -4,7 +4,7 @@ using System.Drawing;
 namespace Shapes_StageOne.Shapes
 {
     [Serializable]
-    public class Triangle:Shape
+    public class Triangle:Shape,IShapeInfo
     {
         private int _side;
 
@@ -37,6 +37,11 @@ namespace Shapes_StageOne.Shapes
             float semiperimeter = (float)(_side + _side + _side) / 2;
             float area = (float)Math.Sqrt(semiperimeter * (semiperimeter - _side) * (semiperimeter - _side) * (semiperimeter - _side));
             return area;
+        }
+
+        public string Details()
+        {
+            return $"A:({PointA.X}, {PointA.Y}), B:({PointB.X}, {PointB.Y}), C:({PointC.X}, {PointC.Y}), Side: {Side}, Area: {CalculateArea()}";
         }
 
         public override void Draw(Graphics g)
